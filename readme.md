@@ -8,7 +8,6 @@ This project provides pytorch based implemention of Alexnet,Resnet18 and Resnet3
 |AlexNet        |      40%      |
 |Resnet 18      |     52.11%    |
 |Resnet 34      |     59.68%    |
-|               |               |
 
 ## Requipments:
 **fire**,**pytorch**,**torchvision**,**numpy**,**matplotlib** are required to run this demo. You can install Anaconda[^1] or Miniconda[^2] to 
