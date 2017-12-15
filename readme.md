@@ -1,7 +1,7 @@
-# **A Pytorch based Imlemention of DukeMTMC-reID baseline(AlexNet,ResNet18,Resnet34)**
+# **A Pytorch based Implementation of DukeMTMC-reID baseline(AlexNet,ResNet18,Resnet34)**
 
 ## Introduction:
-This project provides pytorch based implemention of Alexnet,Resnet18 and Resnet34. Their performance on DukeMTMC-reID are listed below:
+This project provides pytorch based implementation of Alexnet,Resnet18 and Resnet34. Their performance on DukeMTMC-reID are listed below:
 
 |Model Name     |    Rank 1 Acc |
 | ------------- |:-------------:|
@@ -9,7 +9,7 @@ This project provides pytorch based implemention of Alexnet,Resnet18 and Resnet3
 |Resnet 18      |     52.11%    |
 |Resnet 34      |     59.68%    |
 
-## Requipments:
+## Requirements:
 **fire**,**pytorch**,**torchvision**,**numpy**,**matplotlib** are required to run this demo. You can install Anaconda[^1] or Miniconda[^2] to 
 reduce your configuration time
 
