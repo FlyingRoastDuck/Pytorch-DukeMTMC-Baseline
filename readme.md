@@ -10,12 +10,9 @@ This project provides pytorch based implementation of Alexnet,Resnet18 and Resne
 |Resnet 34      |     59.68%    |
 
 ## Requirements:
-**fire**,**pytorch**,**torchvision**,**numpy**,**matplotlib** are required to run this demo. You can install Anaconda[^1] or Miniconda[^2] to 
+**fire**,**pytorch**,**torchvision**,**numpy**,**matplotlib** are required to run this demo. You can install [Anaconda](https://www.anaconda.com/download/) or [Miniconda](https://conda.io/miniconda.html) to 
 reduce your configuration time
 
-
-[^1]:https://www.anaconda.com/download/
-[^2]:https://conda.io/miniconda.html
 
 ## Usage:
 ### 1. Train Model 
