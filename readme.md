@@ -29,7 +29,7 @@ You can also change the model's training parameters with '--' in terminal, for e
 ```
 python reid.py train --modelPath=None --lr=1e-5
 ```
-During the training process, you will get your model's weight file called ($modelname+$time).pth in 'snapshots' folder (please create it) every 10 epoch. 
+During the training process, you will get your model's weight file called ($modelname+$time).pth in 'snapshots' folder (please create it) in every 10 epoch. 
 You can change the frequency in line 31 of config.py(self.snapFreq)
 
 **warning:** if you want to train the model with target pth file, you may change the modelPath value in config.py and run the command above without '--modelPath=None'.
