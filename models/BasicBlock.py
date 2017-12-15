@@ -5,7 +5,7 @@ from torch.nn import functional as F
 
 class BasicBlock(nn.Module):
     """
-    设置resnet18基本模块
+    设置resnet基本模块
     """
 
     def __init__(self, inChannel, outChannel, stride=1, isDownSam=None):
