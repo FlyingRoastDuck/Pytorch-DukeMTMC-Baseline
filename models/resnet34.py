@@ -24,7 +24,13 @@ class resnet34(BasicNet):
         self.layer2 = self.genLayer(128, 256, numBlocks=4, stride=2)
         self.layer3 = self.genLayer(256, 512, numBlocks=6, stride=2)
         self.layer4 = self.genLayer(512, 512, numBlocks=3, stride=2)
-        self.fc = nn.Linear(512, outClass)
+        # self.fc = nn.Linear(512, outClass)
+        self.fc = nn.Sequential(
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(512, outClass)
+        )
 
     def forward(self, x, isTest=False):
         # 前传
