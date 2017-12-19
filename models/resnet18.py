@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .BasicNet import BasicNet
 import torch.nn as nn
+import torch
 from .BasicBlock import BasicBlock
 from torch.nn import functional as F
 
@@ -40,12 +41,17 @@ class resnet18(BasicNet):
             out = self.preH(x)
             out = self.layer4(self.layer3(self.layer2(self.layer1(out))))
             out = self.avgpool(out),
-            return out.view(out.size(0), -1)
+            # 变成向量（90*512）
+            out = torch.squeeze(out, 2)
+            out = torch.squeeze(out, 2)
+            return out
         else:
             out = self.preH(x)
             out = self.layer4(self.layer3(self.layer2(self.layer1(out))))
-            out = self.avgpool(out),
-            out = out.view(out.size(0), -1)
+            out = self.avgpool(out)
+            # 变成向量（90*512）
+            out = torch.squeeze(out, 2)
+            out = torch.squeeze(out, 2)
             return self.fc(out)
 
     def genLayer(self, inChannel, outChannel, numBlocks, stride=1):
