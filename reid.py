@@ -276,10 +276,6 @@ def getEva(dis, loc, isSingle=False, isSave=False):
         loc--queryID
         disLocal--query图像对全部test数据集的相似度向量
     """
-    if isSingle:
-        _, sortLoc = torch.sort(dis[0])
-    else:
-        _, sortLoc = torch.sort(dis[loc])  # 获得第loc张查询图像对全测试集的相似度
     testImgLab = [name for name in os.listdir(opt.testFolder)]  # 测试文件夹图像标签
     testImgLab.sort()  # 有17661个
     testImgCAM = np.array([int(name.split('_')[1][1]) for name in testImgLab])  # 视角
@@ -288,6 +284,18 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     queryImgLab.sort()  # 有2228个
     queryImgCAM = np.array([int(name.split('_')[1][1]) for name in queryImgLab])  # 视角
     queryImgLab = np.array([int(name.split('_')[0]) for name in queryImgLab])  # 标签
+    # 针对单个输入和多输入分别考虑
+    if isSingle:
+        _, sortLoc = torch.sort(dis[0])
+    else:
+        _, sortLoc = torch.sort(dis[loc])  # 获得第loc张查询图像对全测试集的相似度
+
+    # 找到标签相同并且不在一个cam下的图像
+    goodSam = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
+        set(np.where(testImgCAM != queryImgCAM[loc])[0])))
+    # 找到标签相同但是在一个cam下图像
+    junkSameCAM = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
+        set(np.where(testImgCAM == queryImgCAM[loc])[0])))
     # top 6
     if isSave:
         # 如果可以，保存下来
@@ -295,12 +303,6 @@ def getEva(dis, loc, isSingle=False, isSave=False):
         queryImages.sort()
         queryImg = Image.open(queryImages[loc])
         queryImg.save('queryRes/results/queryImg.png')  # 存储查询图像
-    # 找到标签相同并且不在一个cam下的图像
-    goodSam = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
-        set(np.where(testImgCAM != queryImgCAM[loc])[0])))
-    # 找到标签相同但是在一个cam下图像
-    junkSameCAM = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
-        set(np.where(testImgCAM == queryImgCAM[loc])[0])))
     # 根据排序确定
     CMC, imgNameSort, mAP = calCMC(goodSam, junkSameCAM, sortLoc)
     if isSave and len(imgNameSort):
@@ -335,11 +337,11 @@ def calCMC(goodSam, junkSameCAM, sortLoc):
             CMC[:, ii - junkNum:] = 1
             flag = 1
             isGood = isGood + 1
+            imgNameSort[0, ii] = sortLoc[ii]  # 记录是哪张图像
         if len(np.where(np.asarray(junkSameCAM) == sortLoc[ii])[0]):
             # 同一摄像头，直接忽视
             junkNum = junkNum + 1
             continue
-        imgNameSort[:, ii] = sortLoc[ii]  # 记录是哪张图像
         if flag == 1:
             intersS = intersS + 1
         recall = intersS / numGood

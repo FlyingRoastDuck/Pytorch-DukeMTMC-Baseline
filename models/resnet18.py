@@ -40,19 +40,15 @@ class resnet18(BasicNet):
             self.eval()
             out = self.preH(x)
             out = self.layer4(self.layer3(self.layer2(self.layer1(out))))
-            out = self.avgpool(out),
+            out = self.avgpool(out)
             # 变成向量（90*512）
-            out = torch.squeeze(out[0], 2)
-            out = torch.squeeze(out, 2)
-            return out
+            return out.view(out.size(0), -1)
         else:
             out = self.preH(x)
             out = self.layer4(self.layer3(self.layer2(self.layer1(out))))
             out = self.avgpool(out)
             # 变成向量（90*512）
-            out = torch.squeeze(out, 2)
-            out = torch.squeeze(out, 2)
-            return self.fc(out)
+            return self.fc(out.view(out.size(0), -1))
 
     def genLayer(self, inChannel, outChannel, numBlocks, stride=1):
         # 生成一个层
