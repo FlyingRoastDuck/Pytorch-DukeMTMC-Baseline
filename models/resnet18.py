@@ -42,7 +42,7 @@ class resnet18(BasicNet):
             out = self.layer4(self.layer3(self.layer2(self.layer1(out))))
             out = self.avgpool(out),
             # 变成向量（90*512）
-            out = torch.squeeze(out, 2)
+            out = torch.squeeze(out[0], 2)
             out = torch.squeeze(out, 2)
             return out
         else:
