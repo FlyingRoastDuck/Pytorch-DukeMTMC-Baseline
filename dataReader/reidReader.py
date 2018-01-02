@@ -38,7 +38,7 @@ class reidReader(data.Dataset):
         if transformation is None:
             # 给一个默认的变换
             self.trans = T.Compose(
-                [T.Scale((256, 128)),
+                [T.Scale((227,227)),
                  T.ToTensor()])
 
     def __getitem__(self, index):
