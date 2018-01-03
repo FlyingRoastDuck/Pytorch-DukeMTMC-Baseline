@@ -51,7 +51,7 @@ python reid.py query
 ```
 all images in 'dataReader\query\' will be queried and Rank1-6 values will be listed afterwards.
 
-## Reference and Acknowledgments:
+## Reference and Acknowledgment:
 I referenced the code on https://github.com/chenyuntc/pytorch-best-practice and I think it's the best tutorial code for pytorch beginners
 
 Thank for the guidance from [Zhun Zhong](https://github.com/zhunzhong07)
