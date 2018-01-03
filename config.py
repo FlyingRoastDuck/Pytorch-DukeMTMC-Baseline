@@ -13,7 +13,7 @@ class Config(object):
         self.modelPath = 'snapshots/resnet18.pth'  # 模型存储路径
         self.queryFolder = 'dataReader/query/'  # 查询图像路径
         # 这一部分设置模型基本参数
-        self.lr = 1e-3
+        self.lr = 1e-4
         self.weightDecay = 1e-3
         self.batchSize = 90
         self.maxEpoch = 200
