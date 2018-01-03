@@ -16,7 +16,7 @@ class Config(object):
         self.lr = 1e-3
         self.weightDecay = 1e-3
         self.batchSize = 90
-        self.maxEpoch = 100
+        self.maxEpoch = 200
         self.lrDecay = 0.1  # 学习率下降率
         self.lrDecayRate = 40  # 每隔那么多次，学习率就下降一下
         self.minLR = 1e-8  # 学习率最小值
