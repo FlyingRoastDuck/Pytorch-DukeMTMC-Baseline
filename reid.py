@@ -63,7 +63,7 @@ def train():
                 # 要降低学习率
                 for param in optimizer.param_groups:
                     if opt.minLR < param['lr']:
-                        param['lr'] *= opt.lrDecay
+                        param['lr'] = param['lr'] * opt.lrDecay
                         print('学习率下降至{0:4.6f}'.format(param['lr']))
         if opt.trainRate != 1:
             # 训完一轮测试一下
@@ -295,7 +295,7 @@ def sigTerSave(sigNum, frame):
     """
     global isTer
     isTer = True  # 全局变量设置为True
-    print('保存模型参数至当前目录temp.pth�?...')
+    print('保存模型参数至当前目录的temp.pth中...')
 
 
 if __name__ == '__main__':
