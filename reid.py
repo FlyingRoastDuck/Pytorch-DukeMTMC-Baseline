@@ -63,7 +63,7 @@ def train():
                 # 要降低学习率
                 for param in optimizer.param_groups:
                     if opt.minLR < param['lr']:
-                        param['lr'] *= opt.lrDecay
+                        param['lr'] = param['lr']*opt.lrDecay
                         print('学习率下降至{0:4.6f}'.format(param['lr']))
         if opt.trainRate != 1:
             # 训完一轮测试一下
