@@ -1,7 +1,7 @@
 # -*-coding:utf-8-*-
 import torch.nn as nn
 from .BasicNet import BasicNet
-import numpy as np
+import torchvision.models as models
 
 
 class AlexNet(BasicNet):
@@ -13,48 +13,40 @@ class AlexNet(BasicNet):
         """
         父类函数初始化之后，给模型名字赋值并进行前向传播结构设计
         """
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
+        self.alex = models.alexnet(pretrained=True)
+        preW = self.alex.state_dict()
+        del self.alex.features
+        self.alex.features = nn.Sequential(
+            nn.Dropout(),
+            nn.Linear(9216, 4096),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, dilation=1),
-            nn.Conv2d(64, 192, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=(3, 3), stride=2, dilation=(1, 1)),
-            nn.Conv2d(192, 384, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(384, 256, kernel_size=(3, 3), stride=1, padding=(1, 1)),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=(3, 3), stride=1, padding=(1, 1)),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, dilation=(1, 1))
-        )
-        self.classifier = nn.Sequential(
-            nn.Dropout(p=0.5),
-            nn.Linear(6 * 6 * 256, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=0.5),
+            nn.Dropout(),
             nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
+            nn.Linear(4096, outClass)
         )
-        self.fc = nn.Linear(4096, outClass)
+        # 载入已知权重
+        curW = self.alex.state_dict()
+        newW = {k: v for k, v in preW.items() if k in curW}
+        curW.update(newW)
+        self.alex.load_state_dict(newW)
 
-    def forward(self, input, isTest=False):
+    def forward(self, x, isTest=False):
         """
         前向传播
         """
-        out = self.features(input)
-        if not isTest:
-            # 进入训练阶段
-            out = out.view(out.size()[0], -1)
-            out = self.classifier(out)
+        if isTest:
+            self.alex.eval()
+            out = self.alex.classifier(x)
+            out = self.alex.features[0](out)
+            out = self.alex.features[1](out)
+            out = self.alex.features[2](out)
+            out = self.alex.features[3](out)
+            out = self.alex.features[4](out)
+            out = self.alex.features[5](out)
+            return out.view(out.size()[0], -1)
         else:
-            # 测试阶段
-            self.eval()  # 去除drop层
-            out = out.view(out.size()[0], -1)
-            for ii in range(6):
-                # 到最后一层前一层终止
-                out = self.classifier[ii](out)
-        return out
+            return self.alex(x)
 
 
 pass

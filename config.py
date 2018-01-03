@@ -10,7 +10,7 @@ class Config(object):
         # 这一部分设置数据导入导出路径
         self.trainFolder = 'dataReader/readyTrain/'  # 训练图像路径
         self.testFolder = 'dataReader/test/'  # 测试图像路径
-        self.modelPath = 'snapshots/res18.pth'  # 模型存储路径
+        self.modelPath = 'snapshots/resnet18.pth'  # 模型存储路径
         self.queryFolder = 'dataReader/query/'  # 查询图像路径
         # 这一部分设置模型基本参数
         self.lr = 1e-3
