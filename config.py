@@ -16,7 +16,7 @@ class Config(object):
         self.lr = 1e-4
         self.weightDecay = 1e-3
         self.batchSize = 90
-        self.maxEpoch = 200
+        self.maxEpoch = 100
         self.lrDecay = 0.1  # 学习率下降率
         self.lrDecayRate = 40  # 每隔那么多次，学习率就下降一下
         self.minLR = 1e-8  # 学习率最小值
@@ -28,7 +28,7 @@ class Config(object):
         self.useGpu = True  # 要不要GPU
         self.model = 'resnet18'  # 模型名字
         self.numWorker = 4  # 线程数
-        self.snapFreq = 10  # 每过这么多轮保存一下快照
+        self.snapFreq = 60  # 每过这么多轮保存一下快照
         self.isPreTrain = True  # 是否使用预训练模型
         self.topN = 6  # 计算CMC曲线排名前几
 

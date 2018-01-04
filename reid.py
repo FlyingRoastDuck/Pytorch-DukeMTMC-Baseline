@@ -11,10 +11,11 @@ import torch.nn as nn
 from PIL import Image
 
 
-def train():
+def train(**kwargs):
     """
     训练函数
     """
+    opt.parse(**kwargs)
     global isTer
     isTer = False  # 设置全局变量方便中断时存储model参数
     trainData = reidReader(opt.trainFolder)
@@ -23,7 +24,7 @@ def train():
     cvData = reidReader(opt.trainFolder, isCV=True)
     cvLoader = DataLoader(cvData, batch_size=opt.batchSize,
                           shuffle=True, num_workers=opt.numWorker)
-    # 生成模型,使用预训练模型
+    # 生成模型,使用预训练
     model = eval('models.' + opt.model + '(numClass=' + str(opt.numClass) + ')')
     criterion = eval('nn.' + opt.lossFunc + '()')
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, weight_decay=opt.weightDecay)
@@ -51,13 +52,13 @@ def train():
             else:
                 # 中断
                 model.save('temp.pth')
-                print('完毕，中断')
+                print('完毕，中断?')
                 exit(-1)  # 中断
             if jj % opt.printFreq == 0:
                 # 打印loss
                 print('迭代次数：{0:d},损失：{1:4.6f}'.format(ii, lossVal[-1]))
             if ii % opt.snapFreq == opt.snapFreq - 1:
-                # 要保存一下
+                # 要保存一�?
                 model.save()
             if (ii + 1) % opt.lrDecayRate == 0:
                 # 要降低学习率
@@ -66,23 +67,26 @@ def train():
                         param['lr'] = param['lr'] * opt.lrDecay
                         print('学习率下降至{0:4.6f}'.format(param['lr']))
         if opt.trainRate != 1:
-            # 训完一轮测试一下
+            # 训完一轮测试一
             cvAcc.append(val(model, cvLoader))
             trainAcc.append(val(model, trainLoader))
             print('验证测试精度:{0:4.6f}%'.format(100 * cvAcc[-1]))
             print('在训练集上的精度:{0:4.6f}%'.format(100 * trainAcc[-1]))
     # 保存
+    #model.save('demo.pth')
     model.save('snapshots/' + opt.model + '.pth')
     # 作图
     np.savetxt("cvAcc.txt", cvAcc)
     np.savetxt("trainAcc.txt", trainAcc)
     np.savetxt("lossVal.txt", lossVal)
+    print('完毕')
 
 
-def test():
+def test(**kwargs):
+    opt.parse(**kwargs)
     # 进行测试，计算相似度
     model = eval('models.' + opt.model + '(' + str(opt.numClass) + ')')
-    model.load_state_dict(opt.modelPath)
+    model.load(opt.modelPath)
     # 准备数据
     testData = reidReader(opt.trainFolder, isTest=True)
     # 不能洗牌
@@ -95,7 +99,7 @@ def test():
         if opt.useGpu:
             data = data.cuda()
         calF = model(data, isTest=True)
-        if np.shape(features[0]):
+        if np.shape(features)[0]:
             np.vstack((features, calF.data.cpu().numpy()))
         else:
             features = calF.data.cpu().numpy()
@@ -109,7 +113,7 @@ def calScore(score, label):
     """
     score = score.data  # 对于Variable要做这个步骤
     label = label.data
-    _, predict = torch.max(score, 1)  # 按行着最大值位置作为预�?
+    _, predict = torch.max(score, 1)  # 按行着最大值位置作为预�??
     return np.mean((predict == label).numpy()) if not opt.useGpu else np.mean((predict == label).cpu().numpy())
 
 
@@ -129,11 +133,13 @@ def val(model, loader):
     return torch.mean(torch.FloatTensor(acc))
 
 
-def query(imgNum=None):
+def query(imgNum=None,**kwargs):
     """查询
     Arguments:
         **kwargs {[type]} -- [description]
     """
+
+    opt.parse(**kwargs)
     querySet = reidReader(opt.queryFolder, isQuery=True)
     # 不能洗牌
     queryLoader = DataLoader(querySet, batch_size=opt.batchSize, num_workers=opt.numWorker)
@@ -165,7 +171,7 @@ def query(imgNum=None):
     if imgNum is None:
         # 根据邻接矩阵计算CMC top6曲线
         disMat = calAdj(queryF, testF)
-        curCMC = torch.zeros(disMat.size()[0], disMat.size()[1])  # 查询图数�?*测试图像集合大小
+        curCMC = torch.zeros(disMat.size()[0], disMat.size()[1])  # 查询图数�??*测试图像集合大小
         mAP = torch.zeros(disMat.size()[0], 1)
         for ii in range(disMat.size()[0]):
             # 对每一张图象分别查
@@ -176,7 +182,7 @@ def query(imgNum=None):
     else:
         queryVec = queryF[imgNum]  # 对应查询图像特征
         disMat = calAdj(queryVec, testF)
-        CMC, mAP = getEva(disMat, imgNum, isSingle=True, isSave=True)  # 找到带查询图像位�?
+        CMC, mAP = getEva(disMat, imgNum, isSingle=True, isSave=True)  # 找到带查询图像位�??
         print(CMC[:, :opt.topN])
         print('mAP:{0:4.4f}'.format(mAP))
 
@@ -206,7 +212,7 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     """获得评价参数CMC TOP6
     Arguments:
         loc--queryID
-        disLocal--query图像对全部test数据集的相似度向量?
+        disLocal--query图像对全部test数据集的相似度向�??
     """
     testImgLab = [name for name in os.listdir(opt.testFolder)]  # 测试文件夹图像标
     testImgLab.sort()
@@ -225,7 +231,7 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     # 找到标签相同并且不在一个cam下的图像
     goodSam = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
         set(np.where(testImgCAM != queryImgCAM[loc])[0])))
-    # 找到标签相同但是在一个cam下图像?
+    # 找到标签相同但是在一个cam下图�??
     junkSameCAM = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
         set(np.where(testImgCAM == queryImgCAM[loc])[0])))
     # top 6
@@ -242,7 +248,7 @@ def getEva(dis, loc, isSingle=False, isSave=False):
         testImages = [os.path.join(opt.testFolder, name) for name in os.listdir(opt.testFolder)]
         testImages.sort()
         for jj in range(len(imgNameSort)):
-            topImg = Image.open(testImages[int(imgNameSort[0][jj])])  # 只找到top�?
+            topImg = Image.open(testImages[int(imgNameSort[0][jj])])  # 只找到top�??
             topImg.save('queryRes/results/top{0:d}.png'.format(1 + jj))
     return torch.FloatTensor(CMC), mAP
 
@@ -295,7 +301,7 @@ def sigTerSave(sigNum, frame):
     """
     global isTer
     isTer = True  # 全局变量设置为True
-    print('保存模型参数至当前目录的temp.pth中...')
+    print('保存模型参数至当前目录的temp.pth�?...')
 
 
 if __name__ == '__main__':
