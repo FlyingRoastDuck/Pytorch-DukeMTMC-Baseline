@@ -58,7 +58,7 @@ def train(**kwargs):
                 # 打印loss
                 print('迭代次数：{0:d},损失：{1:4.6f}'.format(ii, lossVal[-1]))
             if ii % opt.snapFreq == opt.snapFreq - 1:
-                # 要保存一�?
+                # 要保存
                 model.save()
             if (ii + 1) % opt.lrDecayRate == 0:
                 # 要降低学习率
@@ -73,7 +73,6 @@ def train(**kwargs):
             print('验证测试精度:{0:4.6f}%'.format(100 * cvAcc[-1]))
             print('在训练集上的精度:{0:4.6f}%'.format(100 * trainAcc[-1]))
     # 保存
-    #model.save('demo.pth')
     model.save('snapshots/' + opt.model + '.pth')
     # 作图
     np.savetxt("cvAcc.txt", cvAcc)
@@ -88,7 +87,7 @@ def test(**kwargs):
     model = eval('models.' + opt.model + '(' + str(opt.numClass) + ')')
     model.load(opt.modelPath)
     # 准备数据
-    testData = reidReader(opt.trainFolder, isTest=True)
+    testData = reidReader(opt.testFolder, isTest=True)
     # 不能洗牌
     testLoader = DataLoader(testData, batch_size=opt.batchSize, num_workers=opt.numWorker)
     if opt.useGpu:
@@ -100,7 +99,7 @@ def test(**kwargs):
             data = data.cuda()
         calF = model(data, isTest=True)
         if np.shape(features)[0]:
-            np.vstack((features, calF.data.cpu().numpy()))
+            features = np.vstack((features, calF.data.cpu().numpy()))
         else:
             features = calF.data.cpu().numpy()
     features = torch.FloatTensor(features)
@@ -212,7 +211,7 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     """获得评价参数CMC TOP6
     Arguments:
         loc--queryID
-        disLocal--query图像对全部test数据集的相似度向�??
+        disLocal--query图像对全部test数据集的相似度向
     """
     testImgLab = [name for name in os.listdir(opt.testFolder)]  # 测试文件夹图像标
     testImgLab.sort()
