@@ -16,7 +16,8 @@ reduce your configuration time
 
 ## Usage:
 ### 1. Train Model 
-run download.sh to download the dataset
+create 3 directories:dataReader/readyTrain dataReader/test and dataReader/query
+execute download.sh to download the dataset
 change line 29 of config.py to select the model you want to train,the following models are supported:
 - Alexnet ---- change self.model's value to "AlexNet"
 - Resnet 18 ---- change self.model's value to "resnet18"
