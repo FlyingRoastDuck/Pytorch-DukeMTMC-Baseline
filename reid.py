@@ -211,14 +211,14 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     """获得评价参数CMC TOP6
     Arguments:
         loc--queryID
-        disLocal--query图像对全部test数据集的相似度向
+        disLocal--query图像对全部test数据集的相似度向量
     """
-    testImgLab = [name for name in os.listdir(opt.testFolder)]  # 测试文件夹图像标
-    testImgLab.sort()
+    testImgLab = [name for name in os.listdir(opt.testFolder)]  # 测试文件夹图像标签
+    testImgLab.sort()  # 有17661个
     testImgCAM = np.array([int(name.split('_')[1][1]) for name in testImgLab])  # 视角
     testImgLab = np.array([int(name.split('_')[0]) for name in testImgLab])  # 标签
     queryImgLab = [name for name in os.listdir(opt.queryFolder)]  # 查询图像集合图像
-    queryImgLab.sort()
+    queryImgLab.sort()  # 有2228个
     queryImgCAM = np.array([int(name.split('_')[1][1]) for name in queryImgLab])  # 视角
     queryImgLab = np.array([int(name.split('_')[0]) for name in queryImgLab])  # 标签
     # 针对单个输入和多输入分别考虑
@@ -230,12 +230,12 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     # 找到标签相同并且不在一个cam下的图像
     goodSam = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
         set(np.where(testImgCAM != queryImgCAM[loc])[0])))
-    # 找到标签相同但是在一个cam下图�??
+    # 找到标签相同但是在一个cam下图像
     junkSameCAM = list(set(np.where(testImgLab == queryImgLab[loc])[0]).intersection(
         set(np.where(testImgCAM == queryImgCAM[loc])[0])))
     # top 6
     if isSave:
-        # 如果可以，保存下
+        # 如果可以，保存下来
         queryImages = [os.path.join(opt.queryFolder, name) for name in os.listdir(opt.queryFolder)]
         queryImages.sort()
         queryImg = Image.open(queryImages[loc])
@@ -243,11 +243,11 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     # 根据排序确定
     CMC, imgNameSort, mAP = calCMC(goodSam, junkSameCAM, sortLoc)
     if isSave and len(imgNameSort):
-        # 要保存图
+        # 要保存图像
         testImages = [os.path.join(opt.testFolder, name) for name in os.listdir(opt.testFolder)]
         testImages.sort()
         for jj in range(len(imgNameSort)):
-            topImg = Image.open(testImages[int(imgNameSort[0][jj])])  # 只找到top�??
+            topImg = Image.open(testImages[int(imgNameSort[jj])])  # 只找到top几
             topImg.save('queryRes/results/top{0:d}.png'.format(1 + jj))
     return torch.FloatTensor(CMC), mAP
 
@@ -274,7 +274,7 @@ def calCMC(goodSam, junkSameCAM, sortLoc):
             CMC[:, ii - junkNum:] = 1
             flag = 1
             isGood = isGood + 1
-            imgNameSort[0, ii] = sortLoc[ii]  # 记录是哪张图
+            imgNameSort[0, ii] = sortLoc[ii]  # 记录是哪张图像
         if len(np.where(np.asarray(junkSameCAM) == sortLoc[ii])[0]):
             # 同一摄像头，直接忽视
             junkNum = junkNum + 1
@@ -288,10 +288,9 @@ def calCMC(goodSam, junkSameCAM, sortLoc):
         oldRecall = recall
         oldPrecision = precision
         count = count + 1
-        if numGood == isGood:
-            return CMC, imgNameSort[:opt.topN], mAP
-    imgNameSort = imgNameSort[imgNameSort != 0]  # 去除0
-    return CMC, imgNameSort[:opt.topN], mAP
+    finalSort = imgNameSort[imgNameSort != 0]  # 去除0
+    finalSort = finalSort if np.shape(finalSort)[0] < opt.topN else finalSort[:opt.topN]
+    return CMC, finalSort, mAP
 
 
 def sigTerSave(sigNum, frame):
@@ -300,7 +299,7 @@ def sigTerSave(sigNum, frame):
     """
     global isTer
     isTer = True  # 全局变量设置为True
-    print('保存模型参数至当前目录的temp.pth�?...')
+    print('保存模型参数至当前目录的temp.pth...')
 
 
 if __name__ == '__main__':

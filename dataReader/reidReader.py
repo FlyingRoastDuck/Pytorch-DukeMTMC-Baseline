@@ -13,7 +13,6 @@ class reidReader(data.Dataset):
     """
     继承torch.utils.data.Dataset实现一个数据读取器
     """
-
     def __init__(self, srcFolder, transformation=None, isCV=False, isQuery=False, isTest=False):
         """
         初始化参数，读入数据,isCV判断是不是交叉验证数据,默认训练集
@@ -34,11 +33,10 @@ class reidReader(data.Dataset):
                 self.imgName = allFiles[:int(opt.trainRate * fileNum)]
             else:
                 self.imgName = allFiles
-        # normalize = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         if transformation is None:
             # 给一个默认的变换
             self.trans = T.Compose(
-                [T.Scale((227,227)),
+                [T.Scale((227, 227)),
                  T.ToTensor()])
 
     def __getitem__(self, index):
