@@ -3,11 +3,11 @@
 ## Introduction:
 This project provides pytorch based implementation of Resnet18,Resnet34 and Resnet50. Their performance on DukeMTMC-reID are listed below:
 
-|Model Name     |    Rank 1 Acc |    mAP        |
+|  Model Name   |   Rank 1 Acc  |      mAP      |
 | ------------- |:-------------:|:-------------:|
-|Resnet 18      |      40%      |      40%      |
-|Resnet 34      |     52.11%    |      40%      |
-|Resnet 50      |     73.68%    |     43.27%    |
+|  Resnet 18    |     70.38%    |     46.63%    |
+|  Resnet 34    |     74.10%    |     48.60%    |
+|  Resnet 50    |     75.68%    |     53.27%    |
 
 ## Requirements:
 **fire**,**pytorch**,**torchvision**,**numpy** are required to run this demo. 
@@ -42,9 +42,9 @@ open a terminal in project's folder and run
 ```
 python reid.py train --modelPath=None
 ``` 
-You can also change the model's training parameters with '--' in terminal, for example, if you want to change the initial learning rate of model to 1e-5, you can run this command to start training:
+You can also change the model's training parameters with '--' in terminal, for example, if you want to change the initial learning rate of model to 0.01, you can run this command to start training:
 ```
-python reid.py train --modelPath=None --lr=1e-5
+python reid.py train --modelPath=None --lr=0.01
 ```
 During the training process, you will get your model's weight file called ($modelname+$time).pth in 'snapshots' folder (please create it) in every 10 epoch. 
 You can change the frequency in line 31 of config.py(self.snapFreq)
@@ -71,4 +71,4 @@ all images in 'dataReader\query\' will be queried and Rank1-6 values will be lis
 ## Reference and Acknowledgment:
 I referenced the code on https://github.com/chenyuntc/pytorch-best-practice and I think it's the best tutorial code for pytorch beginners
 
-Thank for the guidance from [Zhun Zhong](https://github.com/zhunzhong07)
+Thank for the guidance from [zhunzhong07](https://github.com/zhunzhong07) and [layumi](https://github.com/layumi)
