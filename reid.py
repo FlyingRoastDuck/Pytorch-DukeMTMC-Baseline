@@ -1,5 +1,5 @@
 from config import opt
-from dataReader.reidReader import reidReader
+from dataReader.conReader import conReader
 import torch
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
@@ -9,6 +9,7 @@ import os
 import signal
 import torch.nn as nn
 from PIL import Image
+from torch.optim import lr_scheduler
 
 
 def train(**kwargs):
@@ -18,63 +19,70 @@ def train(**kwargs):
     opt.parse(**kwargs)
     global isTer
     isTer = False  # 设置全局变量方便中断时存储model参数
-    trainData = reidReader(opt.trainFolder)
+    trainData = conReader(opt.trainFolder)
     trainLoader = DataLoader(trainData, batch_size=opt.batchSize,
                              shuffle=True, num_workers=opt.numWorker)
-    cvData = reidReader(opt.trainFolder, isCV=True)
+    cvData = conReader(opt.trainFolder, isTrain=False,isCV=True)
     cvLoader = DataLoader(cvData, batch_size=opt.batchSize,
                           shuffle=True, num_workers=opt.numWorker)
     # 生成模型,使用预训练
     model = eval('models.' + opt.model + '(numClass=' + str(opt.numClass) + ')')
+    model.train(True)  # 设置模型为训练模式（dropout等均生效）
     criterion = eval('nn.' + opt.lossFunc + '()')
-    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr, weight_decay=opt.weightDecay)
-    optimizer.zero_grad()
-    lossVal = []
-    trainAcc = []
-    cvAcc = []
+    #初始化优化器,要使用不同的学习率进行优化
+    acclerateParams = list(map(id, model.res.fc.parameters())) + list(map(id, model.classifierLayer.parameters()))
+    baseParams = filter(lambda p: id(p) not in acclerateParams, model.parameters())
+    # 观测多个变量
+    optimizer = torch.optim.SGD([
+        {'params': baseParams, 'lr': opt.lr},
+        {'params': model.res.fc.parameters(), 'lr': 0.1},
+        {'params': model.classifierLayer.parameters(), 'lr': 0.1}
+    ], momentum=0.9, weight_decay=5e-4, nesterov=True)    
+    timerOp = lr_scheduler.StepLR(optimizer,step_size=opt.lrDecayRate,gamma=opt.lrDecay) #每经过40轮迭代，学习率就变为原来的0.1
+    lossVal = []  # 记录损失函数变化
+    trainAcc = []  # 记录训练集精度变化
+    cvAcc = []  # 记录交叉验证数据集精度变化
     if opt.useGpu:
         model = model.cuda()
     # 开始训练
-    signal.signal(signal.SIGINT, sigTerSave)
+    signal.signal(signal.SIGINT, sigTerSave)  # 设置监听器方便随时中断
     for ii in range(opt.maxEpoch):
-        for jj, (data, label) in enumerate(trainLoader):
-            if not isTer:
-                data = Variable(data)
-                label = Variable(label)
-                if opt.useGpu:
-                    data = data.cuda()
-                    label = label.cuda()
-                score = model(data)
-                loss = criterion(score, label)
-                lossVal.append(loss.cpu().data[0])  # 存储下来
-                loss.backward()
-                optimizer.step()  # 更新
+        for phase in ['train', 'val']:
+            if phase is 'val':              
+                # 进入val模式
+                model.train(False)
+                cvAcc.append(val(model, cvLoader))
+                print('验证测试精度:{0:4.6f}%'.format(100 * cvAcc[-1]))
             else:
-                # 中断
-                model.save('temp.pth')
-                print('完毕，中断?')
-                exit(-1)  # 中断
-            if jj % opt.printFreq == 0:
-                # 打印loss
-                print('迭代次数：{0:d},损失：{1:4.6f}'.format(ii, lossVal[-1]))
-            if ii % opt.snapFreq == opt.snapFreq - 1:
-                # 要保存
-                model.save()
-            if (ii + 1) % opt.lrDecayRate == 0:
-                # 要降低学习率
-                for param in optimizer.param_groups:
-                    if opt.minLR < param['lr']:
-                        param['lr'] = param['lr'] * opt.lrDecay
-                        print('学习率下降至{0:4.6f}'.format(param['lr']))
-        if opt.trainRate != 1:
-            # 训完一轮测试一
-            cvAcc.append(val(model, cvLoader))
-            trainAcc.append(val(model, trainLoader))
-            print('验证测试精度:{0:4.6f}%'.format(100 * cvAcc[-1]))
-            print('在训练集上的精度:{0:4.6f}%'.format(100 * trainAcc[-1]))
+                timerOp.step() #仅有达到40轮之后学习率才会下降
+                model.train(True)
+                for jj, (data, label) in enumerate(trainLoader):
+                    if not isTer:
+                        data = Variable(data)
+                        label = Variable(label)
+                        if opt.useGpu:
+                            data = data.cuda()
+                            label = label.cuda()
+                        optimizer.zero_grad()
+                        score = model(data)
+                        loss = criterion(score, label)
+                        lossVal.append(loss.cpu().data[0])  # 存储下来
+                        loss.backward()
+                        optimizer.step()  # 更新
+                    else:
+                        # 中断时要先存储模型参数再退出
+                        model.save('temp.pth')
+                        print('完毕，中断')
+                        exit(-1)  # 中断
+                    if jj % opt.printFreq == 0:
+                        # 打印loss
+                        print('迭代次数：{0:d},损失：{1:4.6f}'.format(ii, lossVal[-1]))
+                    if ii % opt.snapFreq == opt.snapFreq - 1:
+                        # 要保存
+                        model.save()
     # 保存
     model.save('snapshots/' + opt.model + '.pth')
-    # 作图
+    # 保留数据方便作图
     np.savetxt("cvAcc.txt", cvAcc)
     np.savetxt("trainAcc.txt", trainAcc)
     np.savetxt("lossVal.txt", lossVal)
@@ -82,29 +90,46 @@ def train(**kwargs):
 
 
 def test(**kwargs):
+    #针对test（gallery）数据集进行
     opt.parse(**kwargs)
     # 进行测试，计算相似度
     model = eval('models.' + opt.model + '(' + str(opt.numClass) + ')')
     model.load(opt.modelPath)
+    model.res.fc = nn.Sequential()
+    model.classifierLayer = nn.Sequential() #注意这里不能直接删除，免得前传的时候找不到层，置空就好
+    model = model.eval()  # 设置为测试模式，dropout等均失效    
     # 准备数据
-    testData = reidReader(opt.testFolder, isTest=True)
+    testData = conReader(opt.testFolder, isTrain=False)
     # 不能洗牌
-    testLoader = DataLoader(testData, batch_size=opt.batchSize, num_workers=opt.numWorker)
+    testLoader = DataLoader(
+        testData, batch_size=opt.batchSize, num_workers=opt.numWorker)
     if opt.useGpu:
         model = model.cuda()
-    features = np.array([])
-    for ii, (data, label) in enumerate(testLoader):
-        data = Variable(data)
-        if opt.useGpu:
-            data = data.cuda()
-        calF = model(data, isTest=True)
-        if np.shape(features)[0]:
-            features = np.vstack((features, calF.data.cpu().numpy()))
-        else:
-            features = calF.data.cpu().numpy()
-    features = torch.FloatTensor(features)
+    features = torch.FloatTensor()  # 初始化一个floattensor用于存储特征
+    for ii, (imgData, label) in enumerate(testLoader):
+        n, _, _, _ = imgData.size()  # 获得图像数目
+        doubleF = torch.FloatTensor(n, model.numFin).zero_()  # 存储反转前后提取特征的融合特征
+        for jj in range(2):
+            inImg = hozFilp(imgData)  # 第一次要反转
+            if opt.useGpu:
+                inImg = inImg.cuda()
+            calF = model(Variable(inImg))  # 提取出2048维特征
+            doubleF += calF.data.cpu() #融合即是相加        
+        #feature归一化        
+        normF = torch.norm(doubleF, p=2, dim=1, keepdim=True)
+        doubleF = doubleF.div(normF.expand_as(doubleF))
+        features = torch.cat((features, doubleF), 0)  # 将得到的特征按照垂直方向进行拼接
     torch.save(features, "snapshots/allF.pth")
-    print("所有特征已经保存")
+    print("TEST所有特征已经保存")
+
+
+def hozFilp(img):
+    """
+    水平反转图像进行Data Argumentation
+    """
+    idx = torch.arange(img.size(3) - 1, -1, -1).long()  # N x C x H x W
+    imgFlip = img.index_select(3, idx)
+    return imgFlip
 
 
 def calScore(score, label):
@@ -112,8 +137,8 @@ def calScore(score, label):
     """
     score = score.data  # 对于Variable要做这个步骤
     label = label.data
-    _, predict = torch.max(score, 1)  # 按行着最大值位置作为预�??
-    return np.mean((predict == label).numpy()) if not opt.useGpu else np.mean((predict == label).cpu().numpy())
+    _, predict = torch.max(score, 1)  # 按行着最大值位置作为预测
+    return torch.mean((predict==label).type(torch.FloatTensor))
 
 
 def val(model, loader):
@@ -132,45 +157,55 @@ def val(model, loader):
     return torch.mean(torch.FloatTensor(acc))
 
 
-def query(imgNum=None,**kwargs):
+def query(imgNum=None, **kwargs):
     """查询
     Arguments:
         **kwargs {[type]} -- [description]
     """
-
+    #针对query数据集进行处理的函数，主要仍然是提取特征
     opt.parse(**kwargs)
-    querySet = reidReader(opt.queryFolder, isQuery=True)
+    querySet = conReader(opt.queryFolder, isTrain=False)
     # 不能洗牌
-    queryLoader = DataLoader(querySet, batch_size=opt.batchSize, num_workers=opt.numWorker)
+    queryLoader = DataLoader(
+        querySet, batch_size=opt.batchSize, num_workers=opt.numWorker)
     # 加载模型
+    # 进行测试，计算相似度
     model = eval('models.' + opt.model + '(' + str(opt.numClass) + ')')
+    model.load(opt.modelPath)
+    model.res.fc = nn.Sequential()
+    model.classifierLayer = nn.Sequential() #注意这里不能直接删除，免得前传的时候找不到层，置空就好
+    model = model.eval()  # 设置为测试模式，dropout等均失效    
     # 转移到GPU
     if opt.useGpu:
         model = model.cuda()
-    queryF = np.array([])
-    for ii, (data, label) in enumerate(queryLoader):
-        # 导入查询集图
-        data = Variable(data)
-        if opt.useGpu:
-            data = data.cuda()
-        calFeature = model(data, isTest=True)  # 获取特征
-        if np.shape(queryF)[0]:
-            queryF = np.vstack((queryF, calFeature.view(calFeature.size()[0], -1).data.cpu().numpy()))
-        else:
-            # 对于allF不存在的情况就直接复
-            queryF = calFeature.view(calFeature.size()[0], -1).data.cpu().numpy()
-    queryF = torch.FloatTensor(queryF)
+
+    queryF = torch.FloatTensor()  # 初始化一个floattensor用于存储特征
+    for ii, (imgData, label) in enumerate(queryLoader):
+        n, _, _, _ = imgData.size()  # 获得图像数目
+        doubleF = torch.FloatTensor(n, model.numFin).zero_()  # 存储反转前后提取特征的融合特征
+        for jj in range(2):
+            inData = hozFilp(imgData)  # 第一次要反转
+            if opt.useGpu:
+                inData = inData.cuda()
+            calF = model(Variable(inData))  # 提取出2048维特征
+            doubleF += calF.data.cpu() #融合即是相加        
+        #feature归一化        
+        normF = torch.norm(doubleF, p=2, dim=1, keepdim=True)
+        doubleF = doubleF.div(normF.expand_as(doubleF))
+        queryF = torch.cat((queryF, doubleF), 0)  # 将得到的特征按照垂直方向进行拼接
     torch.save(queryF, 'snapshots/queryF.pth')
     print('查询图像集合特征已保存至queryF.pth')
     # 使用欧式距离获得邻接矩阵,注意图像名字要排
-    allFiles = [os.path.join(opt.queryFolder, name) for name in os.listdir(opt.queryFolder)]
+    allFiles = [os.path.join(opt.queryFolder, name)
+                for name in os.listdir(opt.queryFolder)]
     allFiles.sort()
     # 只会计算某个样本
     testF = torch.load('snapshots/allF.pth')
     if imgNum is None:
         # 根据邻接矩阵计算CMC top6曲线
         disMat = calAdj(queryF, testF)
-        curCMC = torch.zeros(disMat.size()[0], disMat.size()[1])  # 查询图数�??*测试图像集合大小
+        curCMC = torch.zeros(disMat.size()[0], disMat.size()[
+                             1])  # 查询图数�??*测试图像集合大小
         mAP = torch.zeros(disMat.size()[0], 1)
         for ii in range(disMat.size()[0]):
             # 对每一张图象分别查
@@ -181,7 +216,8 @@ def query(imgNum=None,**kwargs):
     else:
         queryVec = queryF[imgNum]  # 对应查询图像特征
         disMat = calAdj(queryVec, testF)
-        CMC, mAP = getEva(disMat, imgNum, isSingle=True, isSave=True)  # 找到带查询图像位�??
+        CMC, mAP = getEva(disMat, imgNum, isSingle=True,
+                          isSave=True)  # 找到带查询图像位�??
         print(CMC[:, :opt.topN])
         print('mAP:{0:4.4f}'.format(mAP))
 
@@ -215,12 +251,16 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     """
     testImgLab = [name for name in os.listdir(opt.testFolder)]  # 测试文件夹图像标签
     testImgLab.sort()  # 有17661个
-    testImgCAM = np.array([int(name.split('_')[1][1]) for name in testImgLab])  # 视角
-    testImgLab = np.array([int(name.split('_')[0]) for name in testImgLab])  # 标签
+    testImgCAM = np.array([int(name.split('_')[1][1])
+                           for name in testImgLab])  # 视角
+    testImgLab = np.array([int(name.split('_')[0])
+                           for name in testImgLab])  # 标签
     queryImgLab = [name for name in os.listdir(opt.queryFolder)]  # 查询图像集合图像
     queryImgLab.sort()  # 有2228个
-    queryImgCAM = np.array([int(name.split('_')[1][1]) for name in queryImgLab])  # 视角
-    queryImgLab = np.array([int(name.split('_')[0]) for name in queryImgLab])  # 标签
+    queryImgCAM = np.array([int(name.split('_')[1][1])
+                            for name in queryImgLab])  # 视角
+    queryImgLab = np.array([int(name.split('_')[0])
+                            for name in queryImgLab])  # 标签
     # 针对单个输入和多输入分别考虑
     if isSingle:
         _, sortLoc = torch.sort(dis[0])
@@ -236,7 +276,8 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     # top 6
     if isSave:
         # 如果可以，保存下来
-        queryImages = [os.path.join(opt.queryFolder, name) for name in os.listdir(opt.queryFolder)]
+        queryImages = [os.path.join(opt.queryFolder, name)
+                       for name in os.listdir(opt.queryFolder)]
         queryImages.sort()
         queryImg = Image.open(queryImages[loc])
         queryImg.save('queryRes/results/queryImg.png')  # 存储查询图像
@@ -244,7 +285,8 @@ def getEva(dis, loc, isSingle=False, isSave=False):
     CMC, imgNameSort, mAP = calCMC(goodSam, junkSameCAM, sortLoc)
     if isSave and len(imgNameSort):
         # 要保存图像
-        testImages = [os.path.join(opt.testFolder, name) for name in os.listdir(opt.testFolder)]
+        testImages = [os.path.join(opt.testFolder, name)
+                      for name in os.listdir(opt.testFolder)]
         testImages.sort()
         for jj in range(len(imgNameSort)):
             topImg = Image.open(testImages[int(imgNameSort[jj])])  # 只找到top几
@@ -289,7 +331,8 @@ def calCMC(goodSam, junkSameCAM, sortLoc):
         oldPrecision = precision
         count = count + 1
     finalSort = imgNameSort[imgNameSort != 0]  # 去除0
-    finalSort = finalSort if np.shape(finalSort)[0] < opt.topN else finalSort[:opt.topN]
+    finalSort = finalSort if np.shape(
+        finalSort)[0] < opt.topN else finalSort[:opt.topN]
     return CMC, finalSort, mAP
 
 

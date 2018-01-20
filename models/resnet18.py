@@ -7,28 +7,22 @@ class resnet18(BasicNet):
     def __init__(self, numClass):
         super(resnet18, self).__init__()
         self.res = models.resnet18(pretrained=True)
+        self.res.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.numFin = self.res.fc.in_features #删除fc层之前，看看fc层映射的输入维度大小
         del self.res.fc
         self.res.fc = nn.Sequential(
-            nn.BatchNorm2d(512),
-            nn.ReLU(),
-            nn.Dropout(),
-            nn.Linear(512, numClass)
+            nn.Linear(self.numFin,self.numBottleNeck),
+            nn.BatchNorm2d(self.numBottleNeck),
+            nn.LeakyReLU(0.1),
+            nn.Dropout()
         )
+        self.res.fc.apply(self.weights_init_kaiming)#初始化权重
+        #将特征映射到对应类别
+        self.classifierLayer=nn.Sequential(
+            nn.Linear(self.numBottleNeck, numClass)
+        )
+        self.classifierLayer.apply(self.weights_init_classifier)#初始化权重
 
-    def forward(self, x, isTest=False):
+    def forward(self, x):
         # 前传播算法
-        if isTest:
-            self.eval()
-            x = self.res.conv1(x)
-            x = self.res.bn1(x)
-            x = self.res.relu(x)
-            x = self.res.maxpool(x)
-            x = self.res.layer1(x)
-            x = self.res.layer2(x)
-            x = self.res.layer3(x)
-            x = self.res.layer4(x)
-            x = self.res.avgpool(x)
-            # 只返回特征
-            return x.view(x.size(0), -1)
-        else:
-            return self.res(x)
+        return self.classifierLayer(self.res(x))

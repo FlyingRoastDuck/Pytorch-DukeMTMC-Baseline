@@ -3,10 +3,10 @@ import torch.nn as nn
 from .BasicNet import BasicNet
 
 
-class resnet34(BasicNet):
+class resnet50(BasicNet):
     def __init__(self, numClass):
-        super(resnet34, self).__init__()
-        self.res = models.resnet34(pretrained=True)
+        super(resnet50, self).__init__()
+        self.res = models.resnet50(pretrained=True)
         self.res.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.numFin = self.res.fc.in_features #删除fc层之前，看看fc层映射的输入维度大小
         del self.res.fc

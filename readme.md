@@ -1,18 +1,31 @@
 # **A Pytorch based Implementation of DukeMTMC-reID baseline(AlexNet,ResNet18,Resnet34)**
 
 ## Introduction:
-This project provides pytorch based implementation of Alexnet,Resnet18 and Resnet34. Their performance on DukeMTMC-reID are listed below:
+This project provides pytorch based implementation of Resnet18,Resnet34 and Resnet50. Their performance on DukeMTMC-reID are listed below:
 
-|Model Name     |    Rank 1 Acc |
-| ------------- |:-------------:|
-|AlexNet        |      40%      |
-|Resnet 18      |     52.11%    |
-|Resnet 34      |     59.68%    |
+|Model Name     |    Rank 1 Acc |    mAP        |
+| ------------- |:-------------:|:-------------:|
+|Resnet 18      |      40%      |      40%      |
+|Resnet 34      |     52.11%    |      40%      |
+|Resnet 50      |     73.68%    |     43.27%    |
 
 ## Requirements:
-**fire**,**pytorch**,**torchvision**,**numpy**,**matplotlib** are required to run this demo. You can install [Anaconda](https://www.anaconda.com/download/) or [Miniconda](https://conda.io/miniconda.html) to 
-reduce your configuration time
+**fire**,**pytorch**,**torchvision**,**numpy** are required to run this demo. 
 
+**Pytorch  torchvision**
+
+see http://pytorch.org/ for more information, you are supposed to install pytorch 0.3
+
+**fire**
+
+```angular2html
+pip install fire
+```
+
+**numpy**
+```angular2html
+pip install numpy
+```
 
 ## Usage:
 ### 1. Train Model 
