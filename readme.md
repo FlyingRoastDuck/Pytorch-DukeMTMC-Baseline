@@ -1,4 +1,4 @@
-# **A Pytorch based Implementation of DukeMTMC-reID baseline(AlexNet,ResNet18,Resnet34)**
+# **A Pytorch based Implementation of DukeMTMC-reID baseline(Resnet18,Resnet34 and Resnet50)**
 
 ## Introduction:
 This project provides pytorch based implementation of Resnet18,Resnet34 and Resnet50. Their performance on DukeMTMC-reID are listed below:
