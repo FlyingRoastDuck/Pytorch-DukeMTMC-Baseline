@@ -1,13 +1,13 @@
 # **A Pytorch based Implementation of DukeMTMC-reID baseline(Resnet18,Resnet34 and Resnet50)**
 
 ## Introduction:
-This project provides pytorch based implementation of Resnet18,Resnet34 and Resnet50. Their performance on DukeMTMC-reID are listed below:
+This project provides pytorch based implementation of Resnet18,Resnet34 and Resnet50. Their performance on DukeMTMC-reID are listed below (20 epoch):
 
 |  Model Name   |   Rank 1 Acc  |      mAP      |
 | ------------- |:-------------:|:-------------:|
 |  Resnet 18    |     70.38%    |     46.63%    |
 |  Resnet 34    |     74.10%    |     48.60%    |
-|  Resnet 50    |     75.68%    |     53.27%    |
+|  Resnet 50    |     72.94%    |     48.12%    |
 
 ## Requirements:
 **fire**,**pytorch**,**torchvision**,**numpy** are required to run this demo. 
