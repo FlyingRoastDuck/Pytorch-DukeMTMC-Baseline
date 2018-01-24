@@ -1,3 +1,5 @@
 from .resnet18 import resnet18
 from .resnet34 import resnet34
 from .resnet50 import resnet50
+from .Generator import Generator
+from .Discriminator import Discriminator
