@@ -1,19 +1,13 @@
 # encoding=utf-8
-from config import opt
 from dataReader.conReader import conReader
-import torch
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import models
-import numpy as np
-import os
 import signal
 import torch.nn as nn
 from torch.optim import lr_scheduler
-from utils import calAdj
-from utils import calScore
-from utils import getEva
-from utils import hozFilp
+# 下面这里已经把torch什么的都包含了
+from utils import *
 
 
 def train(**kwargs):
