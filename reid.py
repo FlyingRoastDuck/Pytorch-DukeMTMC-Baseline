@@ -7,6 +7,7 @@ import signal
 import torch.nn as nn
 from torch.optim import lr_scheduler
 from utils import *
+from tqdm import trange
 
 
 def train(**kwargs):
@@ -17,6 +18,7 @@ def train(**kwargs):
     global isTer
     isTer = False  # 设置全局变量方便中断时存储model参数
     trainData = conReader(opt.trainFolder, fakeFolder=opt.fakeTrainFolder)
+    trainNum = trainData.imgNum # 训练图像总数
     trainLoader = DataLoader(trainData, batch_size=opt.batchSize,
                              shuffle=True, num_workers=opt.numWorker)
     cvData = conReader(opt.trainFolder, isTrain=False, isCV=True, fakeFolder=opt.fakeTrainFolder)
@@ -43,47 +45,51 @@ def train(**kwargs):
         model = model.cuda()
     # 开始训练
     signal.signal(signal.SIGINT, sigTerSave)  # 设置监听器方便随时中断
-    for ii in range(opt.maxEpoch):
-        for phase in ['train', 'val']:
-            if phase is 'val':
-                # 进入val模式
-                model.train(False)
-                cvAcc.append(val(model, cvLoader))
-                print('验证测试精度:{0:4.6f}%'.format(100 * cvAcc[-1]))
-            else:
-                timerOp.step()  # 仅有达到40轮之后学习率才会下降
-                model.train(True)
-                for jj, (data, label) in enumerate(trainLoader):
-                    if not isTer:
-                        data = Variable(data)
-                        label = Variable(label)
-                        if opt.useGpu:
-                            data = data.cuda()
-                            label = label.cuda()
-                        optimizer.zero_grad()
-                        score = model(data)
-                        loss = criterion(score, label)
-                        lossVal.append(loss.cpu().data[0])  # 存储下来
-                        loss.backward()
-                        optimizer.step()  # 更新
-                    else:
-                        # 中断时要先存储模型参数再退出
-                        model.save('temp.pth')
-                        print('完毕，中断')
-                        exit(-1)  # 中断
-                    if jj % opt.printFreq == 0:
-                        # 打印loss
-                        print('迭代次数：{0:d},损失：{1:4.6f}'.format(ii, lossVal[-1]))
-                    if ii % opt.snapFreq == opt.snapFreq - 1:
-                        # 要保存
-                        model.save()
+    with trange(opt.maxEpoch, desc='Round') as epochBar:  # 控制外部迭代的进度条
+        for ii in epochBar:
+            for phase in ['train', 'val']:
+                if phase is 'val':
+                    # 进入val模式
+                    model.train(False)
+                    cvAcc.append(val(model, cvLoader))
+                    epochBar.set_description('val acc after epoch{0:d}:{1:4.3f}%'.format(ii, 100 * cvAcc[-1]))
+                else:
+                    timerOp.step()  # 仅有达到40轮之后学习率才会下降
+                    model.train(True)
+                    roundNum = round(trainNum // opt.batchSize)
+                    with trange(roundNum) as roundBar:
+                        for jj, (data, label) in zip(roundBar, trainLoader):
+                            roundBar.set_description('Round')
+                            if not isTer:
+                                data = Variable(data)
+                                label = Variable(label)
+                                if opt.useGpu:
+                                    data = data.cuda()
+                                    label = label.cuda()
+                                optimizer.zero_grad()
+                                score = model(data)
+                                loss = criterion(score, label)
+                                lossVal.append(loss.cpu().data[0])  # 存储下来
+                                loss.backward()
+                                optimizer.step()  # 更新
+                            else:
+                                # 中断时要先存储模型参数再退出
+                                model.save('temp.pth')
+                                print('完毕，中断')
+                                exit(-1)  # 中断
+                            # if jj % opt.printFreq == 0:
+                            #     # 打印loss
+                            roundBar.set_description('current loss{}'.format(lossVal[-1]))
+                            if ii % opt.snapFreq == opt.snapFreq - 1:
+                                # 要保存
+                                model.save()
     # 保存
     model.save('snapshots/' + opt.model + '.pth')
     # 保留数据方便作图
     np.savetxt("cvAcc.txt", cvAcc)
     np.savetxt("trainAcc.txt", trainAcc)
     np.savetxt("lossVal.txt", lossVal)
-    print('完毕')
+    print('done')
 
 
 def test(**kwargs):

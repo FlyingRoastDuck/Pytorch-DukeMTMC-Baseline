@@ -27,7 +27,7 @@ class conReader(data.Dataset):
             fakeFile = [(name.split('_')[-4], os.path.join(fakeFolder, name)) for name in os.listdir(fakeFolder) if
                         name[-3:] == 'jpg']
             # merge
-            files = files+fakeFile
+            files = files + fakeFile
         [allFiles[k].append(v) for k, v in files]
         self.imgName = []  # 用于存储数据集对应的图像文件名
         if isTrain:
@@ -43,6 +43,7 @@ class conReader(data.Dataset):
             for ii in allFiles.keys():
                 self.imgName += allFiles[ii]  # 取全数据集
             self.imgName.sort()  # 注意对于测试数据一定要排好序好对号入座
+        self.imgNum = len(self.imgName)  # 图像总数
         # 给出默认变换
         if transformation is None:
             # 给一个默认的变换
@@ -50,8 +51,8 @@ class conReader(data.Dataset):
                 # 训练数据集要使用特殊变换
                 self.trans = T.Compose([
                     T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0),
-                    T.Resize((144, 144)),
-                    T.RandomCrop((128, 128)),
+                    T.Resize((288, 288)),
+                    T.RandomCrop((256, 256)),
                     T.RandomHorizontalFlip(),
                     T.ToTensor(),
                     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -59,7 +60,7 @@ class conReader(data.Dataset):
             else:
                 self.trans = T.Compose([
                     T.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0),
-                    T.Resize((128, 128)),
+                    T.Resize((256, 256)),
                     T.ToTensor(),
                     T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
                 ])
@@ -73,7 +74,7 @@ class conReader(data.Dataset):
         if flag != 'fake':
             label = int(flag)
         else:
-            label = int(fName.split('_')[2])
+            label = int(fName.split('_')[1])
         srcImg = self.trans(Image.open(fName))
         return srcImg, label
 
