@@ -6,7 +6,6 @@ import models
 import signal
 import torch.nn as nn
 from torch.optim import lr_scheduler
-# 下面这里已经把torch什么的都包含了
 from utils import *
 
 
@@ -17,10 +16,10 @@ def train(**kwargs):
     opt.parse(**kwargs)
     global isTer
     isTer = False  # 设置全局变量方便中断时存储model参数
-    trainData = conReader(opt.trainFolder)
+    trainData = conReader(opt.trainFolder, fakeFolder=opt.fakeTrainFolder)
     trainLoader = DataLoader(trainData, batch_size=opt.batchSize,
                              shuffle=True, num_workers=opt.numWorker)
-    cvData = conReader(opt.trainFolder, isTrain=False, isCV=True)
+    cvData = conReader(opt.trainFolder, isTrain=False, isCV=True, fakeFolder=opt.fakeTrainFolder)
     cvLoader = DataLoader(cvData, batch_size=opt.batchSize,
                           shuffle=True, num_workers=opt.numWorker)
     # 生成模型,使用预训练
@@ -185,7 +184,7 @@ def query(imgNum=None, **kwargs):
         # 根据邻接矩阵计算CMC top6曲线
         disMat = calAdj(queryF, testF)
         curCMC = torch.zeros(disMat.size()[0], disMat.size()[
-            1])  # 查询图数�??*测试图像集合大小
+            1])  # 查询图数
         mAP = torch.zeros(disMat.size()[0], 1)
         for ii in range(disMat.size()[0]):
             # 对每一张图象分别查
