@@ -72,3 +72,13 @@ all images in 'dataReader\query\' will be queried and Rank1-6 values will be lis
 I referenced the code on https://github.com/chenyuntc/pytorch-best-practice and I think it's the best tutorial code for pytorch beginners
 
 Thank for the guidance from [zhunzhong07](https://github.com/zhunzhong07) and [layumi](https://github.com/layumi)
+
+
+## Log
+
+- 2018.5.2
+
+  1. update pytorch to 0.4.0, in 0.4.0, old code may have error.
+  To avoid error, new version of code is now avliable in debug branch.
+  2. tqdm added to show a progress bar dynamicly.
+  3. remove visdom support, there is no need to use visdom. I shall add visdom when necessary.
