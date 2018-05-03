@@ -5,7 +5,7 @@ This project provides pytorch based implementation of Resnet18,Resnet34 and Resn
 
 |  Model Name   |   Rank 1 Acc  |      mAP      |
 | ------------- |:-------------:|:-------------:|
-|  Resnet 18    |     70.38%    |     46.63%    |
+|  Resnet 18    |     69.39%    |     45.90%    |
 |  Resnet 34    |     74.10%    |     48.60%    |
 |  Resnet 50    |     72.94%    |     48.12%    |
 
@@ -27,6 +27,11 @@ pip install fire
 pip install numpy
 ```
 
+**tqdm**
+```angular2html
+pip install tqdm
+```
+
 ## Usage:
 ### 1. Train Model 
 
@@ -34,7 +39,7 @@ create 3 directories:dataReader/readyTrain dataReader/test and dataReader/query
 and then execute download.sh to download images
 
 change line 29 of config.py to select the model you want to train,the following models are supported:
-- Alexnet ---- change self.model's value to "AlexNet"
+- Resnet 50 ---- change self.model's value to "resnet50"
 - Resnet 18 ---- change self.model's value to "resnet18"
 - Resnet 34 ---- change self.model's value to "resnet34"
 
