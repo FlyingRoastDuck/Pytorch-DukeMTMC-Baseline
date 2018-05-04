@@ -84,6 +84,16 @@ Thank for the guidance from [zhunzhong07](https://github.com/zhunzhong07) and [l
 - 2018.5.2
 
   1. update pytorch to 0.4.0, in 0.4.0, old code may have error.
-  To avoid error, new version of code is now avliable in debug branch.
-  2. tqdm added to show a progress bar dynamicly.
-  3. remove visdom support, there is no need to use visdom. I shall add visdom when necessary.
+  To avoid this, new version is now available in debug branch.
+  2. tqdm is added to show a progress bar dynamicly.
+  3. remove visdom support, there is no need to use visdom. I shall add it when necessary.
+
+- 2018.5.3
+
+  1. Code has been tested on market-1501. Results are listed below:
+
+  |  Model Name   |   Rank 1 Acc  |      mAP      |
+  | ------------- |:-------------:|:-------------:|
+  |  Resnet 18    |     81.00%    |     50.42%    |
+  |  Resnet 34    |       -       |       -       |
+  |  Resnet 50    |       -       |       -       |
