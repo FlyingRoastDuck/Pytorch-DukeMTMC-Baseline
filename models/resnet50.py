@@ -28,4 +28,4 @@ class resnet50(BasicNet):
         out = self.res.maxpool(self.res.relu(self.res.bn1(self.res.conv1(x))))
         out = self.res.avgpool(self.res.layer4(self.res.layer3(self.res.layer2(self.res.layer1(out)))))
         out = out.squeeze()
-        return self.classifierLayer(self.res(out))
+        return self.classifierLayer(self.res.fc(out))
