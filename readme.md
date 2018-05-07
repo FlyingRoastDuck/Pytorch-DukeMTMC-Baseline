@@ -97,3 +97,9 @@ Thank for the guidance from [zhunzhong07](https://github.com/zhunzhong07) and [l
   |  Resnet 18    |     81.00%    |     50.42%    |
   |  Resnet 34    |       -       |       -       |
   |  Resnet 50    |       -       |       -       |
+  
+- 2018.5.7
+
+  1. Some reports that mAP calculation of the code is not correct, we shall check and revise all eval part of the project afterwards.
+  
+
