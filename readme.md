@@ -5,9 +5,9 @@ This project provides pytorch based implementation of Resnet18,Resnet34 and Resn
 
 |  Model Name   |   Rank 1 Acc  |      mAP      |
 | ------------- |:-------------:|:-------------:|
-|  Resnet 18    |     69.39%    |     45.90%    |
-|  Resnet 34    |     74.10%    |     48.60%    |
-|  Resnet 50    |     72.94%    |     48.12%    |
+|  Resnet 18    |     69.39%    |     0.4590    |
+|  Resnet 34    |     74.10%    |     0.4860    |
+|  Resnet 50    |     72.94%    |     0.4812    |
 
 ## Requirements:
 **fire**,**pytorch**,**torchvision**,**numpy** are required to run this demo. 
