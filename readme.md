@@ -94,9 +94,9 @@ Thank for the guidance from [zhunzhong07](https://github.com/zhunzhong07) and [l
 
   |  Model Name   |   Rank 1 Acc  |      mAP      |
   | ------------- |:-------------:|:-------------:|
-  |  Resnet 18    |     81.00%    |     50.42%    |
+  |  Resnet 18    |     81.00%    |     0.5042    |
   |  Resnet 34    |       -       |       -       |
-  |  Resnet 50    |       -       |       -       |
+  |  Resnet 50    |     86.49%    |       -       |
   
   2. Give up pytorch 0.4.0 support.
   
