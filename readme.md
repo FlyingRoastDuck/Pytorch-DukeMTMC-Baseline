@@ -91,12 +91,12 @@ Thank for the guidance from [zhunzhong07](https://github.com/zhunzhong07) and [l
 - 2018.5.3
 
   1. Code has been tested on market-1501. Results are listed below:
-
-  |  Model Name   |   Rank 1 Acc  |      mAP      |
-  | ------------- |:-------------:|:-------------:|
-  |  Resnet 18    |     81.00%    |     0.5042    |
-  |  Resnet 34    |       -       |       -       |
-  |  Resnet 50    |     86.49%    |       -       |
+ 
+|  Model Name   |   Rank 1 Acc  |      mAP      |
+| ------------- |:-------------:|:-------------:|
+|  Resnet 18    |     81.00%    |     0.5042    |
+|  Resnet 34    |       -       |       -       |
+|  Resnet 50    |     86.49%    |     0.5536    |
   
   2. Give up pytorch 0.4.0 support.
   
